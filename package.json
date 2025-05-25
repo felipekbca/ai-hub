@@ -1,0 +1,61 @@
+ {
+  "name": "ai-hub-electron-app-v2",
+  "version": "1.0.0",
+  "description": "Um hub Electron para integrar NotebookLM, Gemini e ChatGPT (revisado).",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron . --gtk-version=3 --enable-features=UseOzonePlatform --ozone-platform=wayland",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "keywords": [
+    "AI",
+    "Electron",
+    "Hub",
+    "NotebookLM",
+    "Gemini",
+    "ChatGPT"
+  ],
+  "author": "Seu Nome",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^29.3.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0"
+  },
+  "build": {
+    "appId": "com.seu-nome.aihub",
+    "productName": "AI Hub",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!**/*.ts",
+      "!*.code-workspace",
+      "!.vscode/",
+      "!src/",
+      "!electron-builder.yml",
+      "!build/",
+      "!tsconfig.json"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb",
+        "rpm"
+      ],
+      "category": "Utility"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "category": "public.app-category.utilities"
+    }
+  }
+}
+
