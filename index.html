@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>AI Hub</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos globais */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f0f2f5;
+            position: relative;
+        }
+
+        /* Estilos da barra lateral */
+        #sidebar {
+            width: 60px;
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 15px;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.3);
+            z-index: 10;
+            /*border-top-right-radius: 10px;
+            border-bottom-right-radius: 10px;*/
+        }
+
+        /* Estilos dos ícones de AI */
+        .ai-icon {
+            width: 45px;
+            height: 45px;
+            margin-bottom: 15px;
+            background-color: #34495e;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Removido font-size, font-weight, text-align, user-select, text-transform */
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            overflow: hidden; /* Garante que a imagem não vaze */
+        }
+
+        .ai-icon:hover {
+            background-color: #4a6984;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .ai-icon.active {
+            background-color: #007bff;
+            box-shadow: 0 0 12px rgba(0, 123, 255, 0.6);
+            transform: scale(1.05);
+            border: 2px solid #ffffff;
+        }
+
+        /* Novo estilo para as imagens dos ícones */
+        .ai-icon img {
+            max-width: 80%; /* Ajusta a imagem para caber dentro do ícone */
+            max-height: 80%; /* Ajusta a imagem para caber dentro do ícone */
+            object-fit: contain; /* Garante que a imagem inteira seja visível */
+        }
+
+        /* Área principal de conteúdo (onde as BrowserViews são exibidas) */
+        #main-content {
+            flex-grow: 1;
+            background-color: #ffffff;
+            border-radius: 10px;
+            margin: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Estilos para o indicador de carregamento (spinner) */
+        #loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        #loading-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 123, 255, 0.1);
+            border-top: 4px solid #007bff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="sidebar">
+        </div>
+    <div id="main-content">
+        <div id="loading-overlay">
+            <div class="spinner"></div>
+            <p class="loading-text">Carregando...</p>
+        </div>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
