@@ -8,12 +8,12 @@ let mainWindow;
 const aiViews = {};
 let currentView = null;
 
-// Definição dos serviços de IA com caminhos para os ícones
+// Definição dos serviços de IA.
 const aiServices = [
-  { id: 'notebooklm', name: 'NotebookLM', url: 'https://notebooklm.google.com/', iconPath: 'assets/icons/notebooklm.png' }, // Adicionado iconPath
-  { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/', iconPath: 'assets/icons/gemini.png' },     // Adicionado iconPath
-  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chat.openai.com/', iconPath: 'assets/icons/chatgpt.png' },      // Adicionado iconPath
-  { id: 'Meta', name: 'Meta AI', url: 'https://www.meta.ai/', iconPath: 'assets/icons/metaai.png' }      // Adicionado iconPath
+  { id: 'notebooklm', name: 'NotebookLM', url: 'https://notebooklm.google.com/', iconPath: 'assets/icons/notebooklm.png' },
+  { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/', iconPath: 'assets/icons/gemini.png' },
+  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chat.openai.com/', iconPath: 'assets/icons/chatgpt.png' },
+  { id: 'metaai', name: 'Meta AI', url: 'https://www.meta.ai/', iconPath: 'assets/icons/metaai.png' },
 ];
 
 /**
@@ -29,6 +29,8 @@ function createWindow() {
     y: bounds ? bounds.y : undefined,
     minWidth: 800,
     minHeight: 600,
+    // Adiciona o ícone da aplicação para a janela
+    icon: path.join(__dirname, 'assets', 'icon.png'), // <-- Adicione esta linha
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -62,7 +64,7 @@ function updateViewBounds(view) {
   if (!mainWindow || !view) return;
 
   const [contentWidth, contentHeight] = mainWindow.getContentSize();
-  const sidebarWidth = 60;
+  const sidebarWidth = 40;
 
   view.setBounds({
     x: sidebarWidth,
@@ -99,7 +101,7 @@ app.whenReady().then(() => {
         new Notification({
           title: title,
           body: body,
-          icon: icon || path.join(__dirname, 'assets', 'icon.png'), // Use o ícone padrão ou o do serviço
+          icon: icon || path.join(__dirname, 'assets', 'icon.png'), // <-- Ícone padrão para notificações
           silent: silent
         }).show();
         console.log(`[Notification] Title: ${title}, Body: ${body}`);
@@ -119,11 +121,10 @@ app.whenReady().then(() => {
       aiViews[service.id] = view;
     });
 
-    // Envia a lista de serviços completa para o renderer (incluindo iconPath).
     mainWindow.webContents.send('init-services', aiServices.map(s => ({ 
         id: s.id, 
         name: s.name,
-        iconPath: s.iconPath // Inclui o caminho do ícone
+        iconPath: s.iconPath 
     })));
 
     const lastActiveAIId = store.get('lastActiveAI');
@@ -138,7 +139,7 @@ app.whenReady().then(() => {
       updateViewBounds(initialView);
       currentView = initialView;
       initialView.webContents.focus();
-     // initialView.webContents.openDevTools();
+      //initialView.webContents.openDevTools();
       mainWindow.webContents.send('set-active-ai', initialServiceId);
       store.set('lastActiveAI', initialServiceId);
     }
@@ -155,7 +156,7 @@ app.whenReady().then(() => {
       updateViewBounds(newView);
       currentView = newView;
       newView.webContents.focus();
-     // newView.webContents.openDevTools();
+      //newView.webContents.openDevTools();
       store.set('lastActiveAI', serviceId);
     }
   });

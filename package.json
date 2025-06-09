@@ -1,5 +1,5 @@
- {
-  "name": "ai-hub-electron-app-v2",
+{
+  "name": "ai-hub",
   "version": "1.0.0",
   "description": "Um hub Electron para integrar NotebookLM, Gemini e ChatGPT (revisado).",
   "main": "main.js",
@@ -7,7 +7,8 @@
     "start": "electron . --gtk-version=3 --enable-features=UseOzonePlatform --ozone-platform=wayland",
     "test": "echo \"Error: no test specified\" && exit 1",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "rpm":  "electron-builder --linux rpm"
   },
   "keywords": [
     "AI",
@@ -17,7 +18,7 @@
     "Gemini",
     "ChatGPT"
   ],
-  "author": "Seu Nome",
+  "author": "Felipe Amaro <felipe.pamaro@gmail.com>",
   "license": "ISC",
   "devDependencies": {
     "electron": "^29.3.0",
@@ -27,8 +28,8 @@
     "electron-store": "^8.2.0"
   },
   "build": {
-    "appId": "com.seu-nome.aihub",
-    "productName": "AI Hub",
+    "appId": "ai-hub",
+    "productName": "ai-hub",
     "directories": {
       "output": "dist"
     },
@@ -40,7 +41,11 @@
       "!src/",
       "!electron-builder.yml",
       "!build/",
-      "!tsconfig.json"
+      "!tsconfig.json",
+      "app/**/**",
+      "build/**/**",
+      "node_modules/**/**",
+      "package.json"
     ],
     "linux": {
       "target": [
@@ -48,13 +53,24 @@
         "deb",
         "rpm"
       ],
-      "category": "Utility"
+      "category": "Utility",
+      "icon": "assets/icon.png",
+      "executableName": "ai-hub",
+      "synopsis": "AI hub",
+      "description": "Um hub com as IAs mais famosas",
+      "desktop": {
+        "Name": "AI Bub",
+        "Comment": "Um hub com as IAs mais famosas",
+        "StartupWMClass": "ai-hub"
+      }
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "assets/icon.png"
     },
     "mac": {
-      "category": "public.app-category.utilities"
+      "category": "public.app-category.utilities",
+      "icon": "assets/icon.png"
     }
   }
 }
