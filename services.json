@@ -1,0 +1,26 @@
+[
+  { 
+    "id": "notebooklm", 
+    "name": "NotebookLM", 
+    "url": "https://notebooklm.google.com/", 
+    "iconPath": "assets/icons/notebooklm.png" 
+  },
+  { 
+    "id": "gemini", 
+    "name": "Gemini", 
+    "url": "https://gemini.google.com/", 
+    "iconPath": "assets/icons/gemini.png" 
+  },
+  { 
+    "id": "chatgpt", 
+    "name": "ChatGPT", 
+    "url": "https://chat.openai.com/", 
+    "iconPath": "assets/icons/chatgpt.png" 
+  },
+  { 
+    "id": "metaai", 
+    "name": "Meta AI", 
+    "url": "https://www.meta.ai/", 
+    "iconPath": "assets/icons/metaai.png" 
+  }
+]

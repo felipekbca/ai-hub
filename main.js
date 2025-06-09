@@ -1,6 +1,13 @@
-const { app, BrowserWindow, BrowserView, ipcMain, Menu, Notification, dialog, shell } = require('electron');
+const { app, BrowserWindow, BrowserView, ipcMain, Menu, Notification, dialog, shell, clipboard, session } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const Store = require('electron-store');
+const setupMenu = require('./menu');
+
+// Adiciona o recarregamento automático em desenvolvimento
+try {
+  require('electron-reloader')(module);
+} catch (_) {}
 
 const store = new Store();
 
@@ -8,13 +15,9 @@ let mainWindow;
 const aiViews = {};
 let currentView = null;
 
-// Definição dos serviços de IA.
-const aiServices = [
-  { id: 'notebooklm', name: 'NotebookLM', url: 'https://notebooklm.google.com/', iconPath: 'assets/icons/notebooklm.png' },
-  { id: 'gemini', name: 'Gemini', url: 'https://gemini.google.com/', iconPath: 'assets/icons/gemini.png' },
-  { id: 'chatgpt', name: 'ChatGPT', url: 'https://chat.openai.com/', iconPath: 'assets/icons/chatgpt.png' },
-  { id: 'metaai', name: 'Meta AI', url: 'https://www.meta.ai/', iconPath: 'assets/icons/metaai.png' },
-];
+// Carrega os serviços de IA a partir de um arquivo JSON externo
+const servicesPath = path.join(__dirname, 'services.json');
+const aiServices = JSON.parse(fs.readFileSync(servicesPath, 'utf-8'));
 
 /**
  * Cria a janela principal do aplicativo.
@@ -29,8 +32,7 @@ function createWindow() {
     y: bounds ? bounds.y : undefined,
     minWidth: 800,
     minHeight: 600,
-    // Adiciona o ícone da aplicação para a janela
-    icon: path.join(__dirname, 'assets', 'icon.png'), // <-- Adicione esta linha
+    icon: path.join(__dirname, 'assets', 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -52,9 +54,8 @@ function createWindow() {
   });
   mainWindow.on('move', () => store.set('windowBounds', mainWindow.getBounds()));
 
-  // mainWindow.webContents.openDevTools();
-
-  setupApplicationMenu();
+  // Chama a função de setup do menu do módulo externo
+  setupMenu(app, mainWindow, () => currentView);
 }
 
 /**
@@ -75,6 +76,20 @@ function updateViewBounds(view) {
 }
 
 app.whenReady().then(() => {
+  // Gerenciador de permissões para mais segurança
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    const url = webContents.getURL();
+    
+    // Exemplo: aprova automaticamente as notificações para todos os serviços confiáveis
+    if (permission === 'notifications') {
+      const isKnownService = aiServices.some(service => url.startsWith(service.url));
+      return callback(isKnownService);
+    }
+
+    // Nega todas as outras permissões por padrão
+    return callback(false);
+  });
+
   createWindow();
 
   mainWindow.webContents.on('did-finish-load', () => {
@@ -83,17 +98,22 @@ app.whenReady().then(() => {
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
+          preload: path.join(__dirname, 'view-preload.js')
         }
       });
       mainWindow.addBrowserView(view);
 
+      // Handler para abrir links externos no navegador padrão
+      view.webContents.setWindowOpenHandler(({ url }) => {
+        shell.openExternal(url);
+        return { action: 'deny' };
+      });
+
       view.webContents.on('did-start-loading', () => {
         mainWindow.webContents.send('loading-start', service.id);
-        console.log(`[Loading] ${service.name} started loading.`);
       });
       view.webContents.on('did-stop-loading', () => {
         mainWindow.webContents.send('loading-end', service.id);
-        console.log(`[Loading] ${service.name} stopped loading.`);
       });
 
       view.webContents.on('will-show-notification', (event, title, body, silent, icon, badge, data) => {
@@ -101,16 +121,12 @@ app.whenReady().then(() => {
         new Notification({
           title: title,
           body: body,
-          icon: icon || path.join(__dirname, 'assets', 'icon.png'), // <-- Ícone padrão para notificações
+          icon: icon || path.join(__dirname, 'assets', 'icon.png'),
           silent: silent
         }).show();
-        console.log(`[Notification] Title: ${title}, Body: ${body}`);
       });
 
       view.webContents.loadURL(service.url)
-        .then(() => {
-          console.log(`URL ${service.url} carregada com sucesso para ${service.name}`);
-        })
         .catch(error => {
           console.error(`Erro ao carregar URL para ${service.name} (${service.url}):`, error);
         });
@@ -139,12 +155,51 @@ app.whenReady().then(() => {
       updateViewBounds(initialView);
       currentView = initialView;
       initialView.webContents.focus();
-      //initialView.webContents.openDevTools();
       mainWindow.webContents.send('set-active-ai', initialServiceId);
       store.set('lastActiveAI', initialServiceId);
     }
   });
+  
+  // Listener do menu de contexto (botão direito)
+  ipcMain.on('show-context-menu', (event, props) => {
+    const { selectionText, isEditable, linkURL } = props;
+    const webContents = event.sender;
+    
+    const template = [];
 
+    if (linkURL) {
+        template.push({
+            label: 'Abrir link no navegador',
+            click: () => shell.openExternal(linkURL)
+        }, {
+            label: 'Copiar endereço do link',
+            click: () => clipboard.writeText(linkURL)
+        }, {
+            type: 'separator'
+        });
+    }
+
+    template.push({
+        label: 'Copiar',
+        role: 'copy',
+        enabled: !!selectionText
+    }, {
+        label: 'Colar',
+        role: 'paste',
+        enabled: isEditable
+    }, {
+        type: 'separator'
+    }, {
+        label: 'Recarregar',
+        role: 'reload',
+        click: () => webContents.reload()
+    });
+
+    const menu = Menu.buildFromTemplate(template);
+    menu.popup(BrowserWindow.fromWebContents(webContents));
+  });
+
+  // Listener para trocar o serviço de IA ativo
   ipcMain.on('switch-service', (event, serviceId) => {
     if (currentView) {
       currentView.setBounds({ x: 0, y: 0, width: 0, height: 0 });
@@ -156,7 +211,6 @@ app.whenReady().then(() => {
       updateViewBounds(newView);
       currentView = newView;
       newView.webContents.focus();
-      //newView.webContents.openDevTools();
       store.set('lastActiveAI', serviceId);
     }
   });
@@ -169,98 +223,3 @@ app.whenReady().then(() => {
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit();
 });
-
-function setupApplicationMenu() {
-  const template = [
-    {
-      label: 'Arquivo',
-      submenu: [
-        {
-          label: 'Recarregar AI Atual',
-          accelerator: 'CmdOrCtrl+R',
-          click: () => {
-            if (currentView) {
-              currentView.webContents.reload();
-            }
-          }
-        },
-        { type: 'separator' },
-        {
-          label: 'Sair',
-          accelerator: 'CmdOrCtrl+Q',
-          click: () => {
-            app.quit();
-          }
-        }
-      ]
-    },
-    {
-      label: 'Editar',
-      submenu: [
-        { role: 'undo', label: 'Desfazer' },
-        { role: 'redo', label: 'Refazer' },
-        { type: 'separator' },
-        { role: 'cut', label: 'Cortar' },
-        { role: 'copy', label: 'Copiar' },
-        { role: 'paste', label: 'Colar' },
-        { role: 'delete', label: 'Excluir' },
-        { role: 'selectAll', label: 'Selecionar Tudo' }
-      ]
-    },
-    {
-      label: 'Visualizar',
-      submenu: [
-        { role: 'reload', label: 'Recarregar Janela Principal' },
-        { role: 'forceReload', label: 'Forçar Recarregar Janela Principal' },
-        { type: 'separator' },
-        { role: 'toggledevtools', label: 'Alternar DevTools da Janela Principal' },
-        {
-            label: 'Alternar DevTools da AI Ativa',
-            accelerator: 'F12',
-            click: () => {
-                if (currentView) {
-                    currentView.webContents.toggleDevTools();
-                } else {
-                    dialog.showMessageBox(mainWindow, {
-                        type: 'info',
-                        title: 'DevTools da AI',
-                        message: 'Nenhuma AI ativa para abrir o DevTools.'
-                    });
-                }
-            }
-        },
-        { type: 'separator' },
-        { role: 'resetZoom', label: 'Redefinir Zoom' },
-        { role: 'zoomIn', label: 'Zoom In' },
-        { role: 'zoomOut', label: 'Zoom Out' },
-        { type: 'separator' },
-        { role: 'togglefullscreen', label: 'Tela Cheia' }
-      ]
-    },
-    {
-      label: 'Ajuda',
-      submenu: [
-        {
-          label: 'Sobre o AI Hub',
-          click: () => {
-            dialog.showMessageBox(mainWindow, {
-              type: 'info',
-              title: 'Sobre o AI Hub',
-              message: `AI Hub v${app.getVersion()}\n\nUm integrador de IAs feito com Electron.`,
-              detail: 'Desenvolvido para unificar o acesso às suas ferramentas de Inteligência Artificial favoritas.'
-            });
-          }
-        },
-        {
-            label: 'Visitar Site do Electron',
-            click: () => {
-                shell.openExternal('https://www.electronjs.org');
-            }
-        }
-      ]
-    }
-  ];
-
-  const menu = Menu.buildFromTemplate(template);
-  Menu.setApplicationMenu(menu);
-}
