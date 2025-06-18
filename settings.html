@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Configurações de IAs</title>
+    <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+    <h1>Gerenciar IAs</h1>
+    <p>Adicione ou remova as IAs que aparecerão na sua barra lateral.</p>
+    
+    <div class="container">
+        <div class="column">
+            <h2>Disponíveis</h2>
+            <ul id="available-list" class="service-list">
+                </ul>
+        </div>
+        <div class="column">
+            <h2>Selecionadas</h2>
+            <ul id="selected-list" class="service-list">
+                </ul>
+        </div>
+    </div>
+
+    <div class="footer">
+        <button id="save-button">Salvar e Reiniciar</button>
+        <button id="cancel-button">Cancelar</button>
+    </div>
+
+    <script src="settings-renderer.js"></script>
+</body>
+</html>

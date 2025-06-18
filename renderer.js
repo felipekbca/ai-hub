@@ -71,3 +71,10 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(`Loading ended for ${serviceId}`);
     });
 });
+
+
+window.electronAPI.onSettingsUpdated(() => {
+    console.log('Configurações atualizadas. Recarregando a janela principal...');
+    // A maneira mais simples de redesenhar a UI com as novas IAs é recarregar
+    location.reload();
+});

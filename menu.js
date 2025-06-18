@@ -5,9 +5,10 @@ const { Menu, dialog, shell } = require('electron');
  * @param {Electron.App} app - A instância da aplicação Electron.
  * @param {Electron.BrowserWindow} mainWindow - A janela principal da aplicação.
  * @param {Function} getCurrentView - Uma função que retorna a BrowserView atualmente ativa.
+ * @param {Function} createSettingsWindow - Uma função para criar e mostrar a janela de configurações.
  * @returns {Electron.MenuItemConstructorOptions[]} O template do menu.
  */
-const createMenuTemplate = (app, mainWindow, getCurrentView) => {
+const createMenuTemplate = (app, mainWindow, getCurrentView, createSettingsWindow) => {
   return [
     {
       label: 'Arquivo',
@@ -36,6 +37,14 @@ const createMenuTemplate = (app, mainWindow, getCurrentView) => {
                 console.error('Falha ao limpar o cache:', err);
               }
             }
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Configurações...',
+          accelerator: 'CmdOrCtrl+,',
+          click: () => {
+            createSettingsWindow();
           }
         },
         { type: 'separator' },
@@ -122,9 +131,10 @@ const createMenuTemplate = (app, mainWindow, getCurrentView) => {
  * @param {Electron.App} app - A instância da aplicação Electron.
  * @param {Electron.BrowserWindow} mainWindow - A janela principal da aplicação.
  * @param {Function} getCurrentView - Uma função que retorna a BrowserView atualmente ativa.
+ * @param {Function} createSettingsWindow - Função para criar a janela de configurações.
  */
-const setupMenu = (app, mainWindow, getCurrentView) => {
-  const template = createMenuTemplate(app, mainWindow, getCurrentView);
+const setupMenu = (app, mainWindow, getCurrentView, createSettingsWindow) => {
+  const template = createMenuTemplate(app, mainWindow, getCurrentView, createSettingsWindow);
   const menu = Menu.buildFromTemplate(template);
   Menu.setApplicationMenu(menu);
 };
